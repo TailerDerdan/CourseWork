@@ -3,7 +3,7 @@
 
 struct Point
 {
-	Point();
+	Point() = default;
 	Point(double x, double y) : x(x), y(y) {};
 
 	double x = 0.0;
@@ -13,37 +13,6 @@ struct Point
 };
 
 using PointsVector = std::vector<Point>;
-
-struct InputVector
-{
-	InputVector();
-	InputVector(double omega) : omega(omega) {};
-
-	double omega = 0.0;
-
-	~InputVector() = default;
-};
-
-struct RobotState
-{
-	Point position;
-
-	double phi = 0.0;
-	double theta = 0.0;
-
-	RobotState operator=(const RobotState& rhs)
-	{
-		if (this == &rhs)
-		{
-			return *this;
-		}
-
-		position = rhs.position;
-		phi = rhs.phi;
-		theta = rhs.theta;
-		return *this;
-	}
-};
 
 struct RectInRealMap
 {

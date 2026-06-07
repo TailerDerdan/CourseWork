@@ -9,15 +9,21 @@ find_package(SFML 3.0 COMPONENTS Graphics Window System REQUIRED)
 add_library(MultiRobotMotionPlanningLib
         src/graph/Graph.cpp
         src/graph/Graph.h
+        src/graph/constants.h
         src/robot/Robot.cpp
         src/robot/Robot.h
+        src/robot/constants.h
         src/dynamicEnvironments/IDynamicEnvironments.h
         src/robot/IRobot.h
         src/utils/Types.h
-        src/utils/Constants.h
+        src/utils/constants.h
         src/staticEnvironments/StaticEnvironments.cpp
         src/staticEnvironments/StaticEnvironments.h
         src/utils/utilFunc.h
+        src/robot/types.h
+        src/app/App.cpp
+        src/app/App.h
+        src/app/constants.h
 )
 
 target_link_libraries(MultiRobotMotionPlanningLib PUBLIC

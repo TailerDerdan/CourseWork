@@ -3,7 +3,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "utils/Constants.h"
+#include "utils/constants.h"
 
 void StaticEnvironments::MakeStaticEnvironmentsInRealMap(std::ifstream &input)
 {

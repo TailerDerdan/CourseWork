@@ -1,5 +1,5 @@
 #pragma once
-#include "Types.h"
+#include "types.h"
 
 double GetDistance(const Point& p1, const Point& p2)
 {

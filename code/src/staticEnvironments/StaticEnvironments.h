@@ -3,7 +3,7 @@
 #include <vector>
 #include <fstream>
 
-#include "utils/Types.h"
+#include "utils/types.h"
 
 class StaticEnvironments
 {

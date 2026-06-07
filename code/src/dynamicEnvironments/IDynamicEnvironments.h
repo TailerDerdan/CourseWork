@@ -1,10 +1,10 @@
 #pragma once
-#include "utils/Types.h"
+#include "utils/types.h"
 
 class IDynamicEnvironments
 {
 public:
-	virtual PointsVector SendPredictivePoints() = 0;
+	virtual std::vector<RobotState> SendPredictivePoints() = 0;
 
 	virtual ~IDynamicEnvironments() = default;
 };
