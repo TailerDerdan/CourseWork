@@ -13,25 +13,33 @@ public:
 	RobotState GetState() const override;
 	RobotState GetGoalState() const override;
 	double CalculateCollision(const RobotState& myState, const RobotState& otherState) const override;
-	void PredictPath(const std::vector<std::vector<RobotState>>& robots) override;
+	void PredictPath(const std::vector<std::vector<RobotState>>& robots, const std::vector<std::vector<bool>>& statEnvs) override;
 
 	std::vector<RobotState> SendPredictivePoints() override;
 
-	void CalculateOptimalPath() override;
+	PointsVector GetOptimalPath() override;
+
+	void CalculateOptimalPath(const RobotState& state) override;
 
 	~Robot() = default;
 
 private:
 	size_t GetVertexByCoordinate(const Point& state) const;
 	PointsVector GetRealPosFromGraph(std::vector<size_t> path) const;
-	PointsVector GetSmoothedPath(const PointsVector& path, size_t mu, double epsilon, double dt);
+	PointsVector GetSmoothedPath(const PointsVector& path);
 
 	double CalculateCostTracking(const RobotState& myState, const PointsVector& shortestPath, const std::vector<InputVector>& inputs, size_t currentIndex);
 	double CalculateCostRepulsive(const RobotState& myState, const std::vector<std::vector<RobotState>>& otherRobotsPaths, const std::vector<InputVector>& inputs);
 	double CalculateMainFunc(const RobotState& myState, const PointsVector& shortestPath, const std::vector<std::vector<RobotState>>& otherRobotsPaths,
-		const std::vector<InputVector>& inputs, size_t currentIndex);
-
+		const std::vector<InputVector>& inputs, const std::vector<std::vector<bool>>& statEnvs, size_t currentIndex);
 	double CalculateCollisionBetweenRobots(const RobotState& myState, const std::vector<std::vector<RobotState>>& robots, const std::vector<InputVector>& inputs);
+	double CalculateObstacleCost(const RobotState& myState, const std::vector<InputVector>& inputs, const std::vector<std::vector<bool>>& statEnvs);
+
+	void CorrectGradient(const RobotState& myState, const std::vector<double>& gradient,
+		const std::vector<std::vector<bool>>& statEnvs, const std::vector<std::vector<RobotState>>& robots);
+	bool CheckCollisionWithStatEnv(const RobotState& myState, const std::vector<std::vector<bool>>& statEnvs,
+		const std::vector<std::vector<RobotState>>& robots);
+	bool IsCellInObstacle(double x, double y, const std::vector<std::vector<bool>>& statEnvs) const;
 
 	RobotState GetPredictRobotState(const RobotState& currentState, const InputVector& input, double time);
 

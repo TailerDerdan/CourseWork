@@ -56,7 +56,18 @@ App::App(const std::vector<RobotState>& initStates, const std::vector<RobotState
 {
 	m_window.create(sf::VideoMode({1920, 1080}), "Multi Robot System");
 
-	m_graph.MakeGraph(COUNT_CELL_X, COUNT_CELL_Y);
+	std::ifstream input("../src/static/staticEnvironments.txt");
+	if (!input.is_open())
+	{
+		throw std::runtime_error("Can't open input file");
+	}
+    m_staticEnvironments.MakeStaticEnvironmentsInRealMap(input);
+	m_staticEnvironments.MakeStaticEnvironmentsInGraph(COUNT_CELL_X, COUNT_CELL_Y);
+
+	m_staticEnvironmentsInGraph = m_staticEnvironments.GetStaticEnvironmentsInGraph();
+	m_drawableStatEnvInGraph = m_staticEnvironments.GetDrawableStaticEnv();
+
+	m_graph.MakeGraph(COUNT_CELL_X, COUNT_CELL_Y, m_staticEnvironmentsInGraph);
 	for (size_t iter = 0; iter < initStates.size(); iter++)
 	{
 		auto newRobot = std::make_unique<Robot>(
@@ -104,19 +115,36 @@ void App::DrawMap()
 	m_window.draw(floor);
 
 	sf::VertexArray gridLines(sf::PrimitiveType::Lines);
-	sf::Color gridColor(120, 120, 120, 150);
+	sf::Color gridColor(120, 120, 120);
 
-	for (size_t iter = 0; iter < MAP_WIDTH; iter++)
+	for (size_t iter = 0; iter < COUNT_CELL_X; iter++)
 	{
-		gridLines.append(sf::Vertex(sf::Vector2f(iter, 0), gridColor));
-		gridLines.append(sf::Vertex(sf::Vector2f(iter, MAP_HEIGHT), gridColor));
+		gridLines.append(sf::Vertex(sf::Vector2f(iter * SIZE_CELL, 0), gridColor));
+		gridLines.append(sf::Vertex(sf::Vector2f(iter * SIZE_CELL, MAP_HEIGHT), gridColor));
 	}
 
-	for (size_t iter = 0; iter < MAP_HEIGHT; iter++)
+	for (size_t iter = 0; iter < COUNT_CELL_Y; iter++)
 	{
-		gridLines.append(sf::Vertex(sf::Vector2f(0, iter), gridColor));
-		gridLines.append(sf::Vertex(sf::Vector2f(MAP_WIDTH, iter), gridColor));
+		gridLines.append(sf::Vertex(sf::Vector2f(0, iter * SIZE_CELL), gridColor));
+		gridLines.append(sf::Vertex(sf::Vector2f(MAP_WIDTH, iter * SIZE_CELL), gridColor));
 	}
+
+	sf::RectangleShape env;
+	env.setSize(sf::Vector2f(SIZE_CELL, SIZE_CELL));
+	env.setFillColor(sf::Color::Black);
+	env.setOutlineColor(sf::Color::Red);
+	for (size_t x = 0; x < COUNT_CELL_X; x++)
+	{
+		for (size_t y = 0; y < COUNT_CELL_Y; y++)
+		{
+			if (m_drawableStatEnvInGraph[x][y])
+			{
+				env.setPosition(sf::Vector2f(x * SIZE_CELL, y * SIZE_CELL));
+				m_window.draw(env);
+			}
+		}
+	}
+
 	m_window.draw(gridLines);
 }
 
@@ -134,14 +162,14 @@ void App::DrawRobots()
 	sf::CircleShape goalPoint;
 	goalPoint.setRadius(5.0f);
 
+	sf::RectangleShape pointOfPath;
+	pointOfPath.setFillColor(sf::Color(160, 163, 168));
+	pointOfPath.setOutlineThickness(1.0f);
+	pointOfPath.setSize(sf::Vector2f(SIZE_CELL, SIZE_CELL));
+
 	size_t index = 0;
 	for (auto& robot : m_robots)
 	{
-		drawableRobot.setFillColor(COLORS_FOR_ROBOTS[index]);
-		drawableRobot.setPosition(sf::Vector2f(robot->GetState().position.x, robot->GetState().position.y));
-		drawableRobot.setRotation(sf::radians(robot->GetState().phi));
-		m_window.draw(drawableRobot);
-
 		auto path = robot->SendPredictivePoints();
 		for (auto& point : path)
 		{
@@ -150,10 +178,23 @@ void App::DrawRobots()
 			m_window.draw(drawablePoint);
 		}
 
+		auto optimalPath = robot->GetOptimalPath();
+		for (auto& point : optimalPath)
+		{
+			pointOfPath.setOutlineColor(COLORS_FOR_ROBOTS[index]);
+			pointOfPath.setPosition(sf::Vector2f(point.x, point.y));
+			m_window.draw(pointOfPath);
+		}
+
 		auto goalState = robot->GetGoalState();
 		goalPoint.setFillColor(COLORS_FOR_ROBOTS[index]);
 		goalPoint.setPosition(sf::Vector2f(goalState.position.x, goalState.position.y));
 		m_window.draw(goalPoint);
+
+		drawableRobot.setFillColor(COLORS_FOR_ROBOTS[index]);
+		drawableRobot.setPosition(sf::Vector2f(robot->GetState().position.x, robot->GetState().position.y));
+		drawableRobot.setRotation(sf::radians(robot->GetState().phi));
+		m_window.draw(drawableRobot);
 
 		index++;
 	}
@@ -169,7 +210,7 @@ void App::MakeCalculations()
 	}
 	for (auto& robot : m_robots)
 	{
-		robot->PredictPath(robotStates);
+		robot->PredictPath(robotStates, m_staticEnvironmentsInGraph);
 		robot->Move();
 	}
 }

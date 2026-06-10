@@ -1,4 +1,4 @@
 #pragma once
 #include <iostream>
 
-constexpr size_t PREDICTIVE_SIZE = 25;
+constexpr size_t PREDICTIVE_SIZE = 15;

@@ -11,50 +11,52 @@
 
 Graph::Graph() = default;
 
-void Graph::MakeGraph(size_t width, size_t height)
+void Graph::MakeGraph(size_t width, size_t height, std::vector<std::vector<bool>> environments)
 {
     size_t index = 0;
     m_adjList.clear();
     m_adjList.resize(width * height);
     m_countVertex = width * height;
     size_t weight = 1;
+    double COEF_WEIGHT_FOR_DIAG = 1.414;
     for (size_t col = 0; col < width; col++)
     {
         for (size_t row = 0; row < height; row++, index++)
         {
-            if (col > 0 && row > 0)
+            if (environments[col][row]) continue;
+            if (col > 0 && row > 0 && !environments[col - 1][row - 1])
             {
-                m_adjList[index].emplace_back(index - height - 1, weight);
+                m_adjList[index].emplace_back(index - height - 1, weight * COEF_WEIGHT_FOR_DIAG);
             }
-            if (col > 0)
+            if (col > 0 && !environments[col - 1][row])
             {
                 m_adjList[index].emplace_back(index - height, weight);
             }
-            if (col > 0 && row < height - 1)
+            if (col > 0 && row < height - 1 && !environments[col - 1][row + 1])
             {
-                m_adjList[index].emplace_back(index - height + 1, weight);
+                m_adjList[index].emplace_back(index - height + 1, weight * COEF_WEIGHT_FOR_DIAG);
             }
 
-            if (row > 0)
+            if (row > 0 && !environments[col][row - 1])
             {
                 m_adjList[index].emplace_back(index - 1, weight);
             }
-            if (row < height - 1)
+            if (row < height - 1 && !environments[col][row + 1])
             {
                 m_adjList[index].emplace_back(index + 1, weight);
             }
 
-            if (col < width - 1 && row > 0)
+            if (col < width - 1 && row > 0 && !environments[col + 1][row - 1])
             {
-                m_adjList[index].emplace_back(index + height - 1, weight);
+                m_adjList[index].emplace_back(index + height - 1, weight * COEF_WEIGHT_FOR_DIAG);
             }
-            if (col < width - 1)
+            if (col < width - 1 && !environments[col + 1][row])
             {
                 m_adjList[index].emplace_back(index + height, weight);
             }
-            if (col < width - 1 && row < height - 1)
+            if (col < width - 1 && row < height - 1 && !environments[col + 1][row + 1])
             {
-                m_adjList[index].emplace_back(index + height + 1, weight);
+                m_adjList[index].emplace_back(index + height + 1, weight * COEF_WEIGHT_FOR_DIAG);
             }
         }
     }
@@ -62,10 +64,11 @@ void Graph::MakeGraph(size_t width, size_t height)
 
 std::vector<size_t> Graph::GetShortestPath(size_t start, size_t end) const
 {
-    size_t INF = std::numeric_limits<size_t>::max();
-    std::priority_queue<iPair, std::vector<iPair>, std::greater<iPair>> pq;
-    std::vector<size_t> dist(m_countVertex, INF);
-    std::vector<size_t> parent(m_countVertex, INF);
+    double INF_D = std::numeric_limits<double>::max();
+    size_t INF_S = std::numeric_limits<size_t>::max();
+    std::priority_queue<iPair, std::vector<iPair>, std::greater<>> pq;
+    std::vector<double> dist(m_countVertex, INF_D);
+    std::vector<size_t> parent(m_countVertex, INF_S);
 
     pq.emplace(0, start);
     dist[start] = 0;
@@ -73,7 +76,7 @@ std::vector<size_t> Graph::GetShortestPath(size_t start, size_t end) const
     while (!pq.empty())
     {
         size_t uVertex = pq.top().second;
-        size_t currentDist = pq.top().first;
+        auto currentDist = pq.top().first;
         pq.pop();
 
         if (currentDist > dist[uVertex]) continue;
@@ -93,8 +96,8 @@ std::vector<size_t> Graph::GetShortestPath(size_t start, size_t end) const
     }
 
     std::vector<size_t> path;
-    if (dist[end] == INF) return path;
-    for (size_t v = end; v != INF; v = parent[v])
+    if (dist[end] == INF_D) return path;
+    for (size_t v = end; v != INF_S; v = parent[v])
     {
         path.push_back(v);
     }

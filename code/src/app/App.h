@@ -23,6 +23,9 @@ private:
 	std::vector<std::unique_ptr<IRobot>> m_robots;
 	StaticEnvironments m_staticEnvironments;
 
+	std::vector<std::vector<bool>> m_staticEnvironmentsInGraph;
+	std::vector<std::vector<bool>> m_drawableStatEnvInGraph;
+
 	Graph m_graph;
 
 	sf::RenderWindow m_window;

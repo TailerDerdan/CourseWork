@@ -15,9 +15,11 @@ public:
 
 	virtual double CalculateCollision(const RobotState& myState, const RobotState& otherState) const = 0;
 
-	virtual void PredictPath(const std::vector<std::vector<RobotState>>& robots) = 0;
+	virtual void PredictPath(const std::vector<std::vector<RobotState>>& robots, const std::vector<std::vector<bool>>& statEnvs) = 0;
 
-	virtual void CalculateOptimalPath() = 0;
+	virtual void CalculateOptimalPath(const RobotState& state) = 0;
+
+	virtual PointsVector GetOptimalPath() = 0;
 
 	virtual ~IRobot() = default;
 };
