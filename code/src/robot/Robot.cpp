@@ -34,6 +34,26 @@ void Robot::Move()
 	if (m_predictPath.empty()) return;
 	m_currentState = GetPredictRobotState(m_currentState, m_inputsVector[0], TIME_FOR_PREDICT);
 
+	RobotState state = m_currentState;
+	for (size_t iter = 0; iter < m_inputsVector.size(); ++iter)
+	{
+		state = GetPredictRobotState(m_currentState, m_inputsVector[0], TIME_FOR_PREDICT);
+		double dx = state.position.x - m_goalState.position.x;
+		double dy = state.position.y - m_goalState.position.y;
+		double dist = std::sqrt(dx * dx + dy * dy);
+		if (dist < SIZE_CELL * 4)
+		{
+			for (auto& input : m_inputsVector)
+			{
+				input.v = 0.0;
+				input.omega = 0.0;
+			}
+			m_predictPath.clear();
+			m_isGoal = true;
+			return;
+		}
+	}
+
 	for (size_t i = 0; i < m_inputsVector.size() - 1; ++i)
 	{
 		m_inputsVector[i] = m_inputsVector[i + 1];
@@ -86,6 +106,10 @@ double Robot::CalculateCollision(const RobotState& myState, const RobotState& ot
 void Robot::PredictPath(const std::vector<std::vector<RobotState>>& robots, const std::vector<std::vector<bool>>& statEnvs)
 {
 	// CalculateOptimalPath(m_currentState);
+	if (m_isGoal)
+	{
+		return;
+	}
 	for (size_t iter = 0; iter < COUNT_STEPS_GRADIENT; ++iter)
 	{
 		std::vector<double> gradient(m_inputsVector.size(), 0.0);

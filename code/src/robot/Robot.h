@@ -54,6 +54,7 @@ private:
 
 	std::vector<InputVector> m_inputsVector;
 	size_t m_indexOfPath = 0;
+	bool m_isGoal = false;
 
 	Graph& m_graph;
 };
