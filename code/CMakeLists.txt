@@ -37,9 +37,3 @@ target_include_directories(MultiRobotMotionPlanningLib PUBLIC
 
 add_executable(multiRobotMotionPlanning src/main.cpp)
 target_link_libraries(multiRobotMotionPlanning PRIVATE MultiRobotMotionPlanningLib)
-
-#add_subdirectory(CShapesTests)
-
-#target_compile_definitions(CShapesTests PRIVATE
-#        TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-

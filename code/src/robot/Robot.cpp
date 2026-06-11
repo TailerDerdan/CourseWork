@@ -85,7 +85,7 @@ double Robot::CalculateCollision(const RobotState& myState, const RobotState& ot
 
 void Robot::PredictPath(const std::vector<std::vector<RobotState>>& robots, const std::vector<std::vector<bool>>& statEnvs)
 {
-	CalculateOptimalPath(m_currentState);
+	// CalculateOptimalPath(m_currentState);
 	for (size_t iter = 0; iter < COUNT_STEPS_GRADIENT; ++iter)
 	{
 		std::vector<double> gradient(m_inputsVector.size(), 0.0);
@@ -141,8 +141,7 @@ void Robot::CalculateOptimalPath(const RobotState& state)
 	auto endPoint = GetVertexByCoordinate(m_goalState.position);
 	auto pathFromDijkstra = m_graph.GetShortestPath(startPoint, endPoint);
 	auto rawPath = GetRealPosFromGraph(pathFromDijkstra);
-	// m_optimalPath = GetSmoothedPath(rawPath);
-	m_optimalPath = rawPath;
+	m_optimalPath = GetSmoothedPath(rawPath);
 }
 
 size_t Robot::GetVertexByCoordinate(const Point& pos) const
@@ -279,26 +278,6 @@ double Robot::CalculateCollisionBetweenRobots(const RobotState& myState, const s
 
 	return result;
 }
-
-// double Robot::CalculateObstacleCost(const RobotState& myState, const std::vector<InputVector>& inputs, const std::vector<std::vector<bool>>& statEnvs)
-// {
-// 	double result = 0.0;
-// 	RobotState predictedState = myState;
-//
-// 	for (auto input : inputs)
-// 	{
-// 		predictedState = GetPredictRobotState(predictedState, input, TIME_FOR_PREDICT);
-//
-// 		if (IsCellInObstacle(predictedState.position.x, predictedState.position.y, statEnvs))
-// 		{
-// 			double dx = myState.position.x - predictedState.position.x;
-// 			double dy = myState.position.y - predictedState.position.y;
-// 			double dist = std::sqrt(dx * dx + dy * dy);
-// 			result += (WEIGHT_COST_OBSTACLES * dist);
-// 		}
-// 	}
-// 	return result;
-// }
 
 double Robot::CalculateObstacleCost(
     const RobotState& myState,
@@ -456,7 +435,7 @@ PointsVector Robot::GetSmoothedPath(const PointsVector& path)
 	PointsVector result;
 	double totalLength = cumS.back();
 
-	for (size_t t = 0; t < totalLength; t += DT_SMOOTH_PATH)
+	for (double t = 0.0; t <= totalLength; t += DT_SMOOTH_PATH)
 	{
 		size_t m = 0;
 		while (m < numSegments - 1 && t > cumS[m + 1])
@@ -468,16 +447,19 @@ PointsVector Robot::GetSmoothedPath(const PointsVector& path)
 		double sumY = 0.0;
 		double totalWeight = 0.0;
 
+		size_t startH = (m > MU) ? (m - MU) : 0;
 		size_t endH = std::min(m + MU, numSegments - 1);
 
-		for (size_t h = m; h <= endH; ++h)
+		for (size_t h = startH; h <= endH; ++h)
 		{
-			double epsilon = s[h] * 0.3;
-			double argMinus = (t - cumS[h+1]) / epsilon;
-			double argPlus  = (-t + cumS[h]) / epsilon;
+			double argMinus = (t - cumS[h+1]) / EPSILON;
+			double argPlus  = (-t + cumS[h]) / EPSILON;
 
-			double sigmaMinus = 1.0 / (1.0 + std::exp(argMinus));
-			double sigmaPlus  = 1.0 / (1.0 + std::exp(argPlus));
+			double expMinus = (argMinus > 50.0) ? 1e20 : std::exp(argMinus);
+			double expPlus  = (argPlus > 50.0) ? 1e20 : std::exp(argPlus);
+
+			double sigmaMinus = 1.0 / (1.0 + expMinus);
+			double sigmaPlus  = 1.0 / (1.0 + expPlus);
 
 			double weight = sigmaMinus * sigmaPlus;
 			double localT = (t - cumS[h]) / s[h];
